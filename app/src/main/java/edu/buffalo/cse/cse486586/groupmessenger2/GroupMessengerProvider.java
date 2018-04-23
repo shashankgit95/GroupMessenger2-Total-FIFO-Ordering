@@ -2,9 +2,19 @@ package edu.buffalo.cse.cse486586.groupmessenger2;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.util.Log;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * GroupMessengerProvider is a key-value table. Once again, please note that we do not implement
@@ -50,6 +60,24 @@ public class GroupMessengerProvider extends ContentProvider {
          * internal storage option that we used in PA1. If you want to use that option, please
          * take a look at the code for PA1.
          */
+        String key,value;
+
+        key = values.get("key").toString();
+        value = values.get("value").toString();
+
+        FileOutputStream outputStream;
+
+        Log.v("key",key);
+        Log.v("value",value);
+        try {
+            outputStream = getContext().openFileOutput(key, Context.MODE_PRIVATE);
+            outputStream.write(value.getBytes());
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
         Log.v("insert", values.toString());
         return uri;
     }
@@ -80,7 +108,32 @@ public class GroupMessengerProvider extends ContentProvider {
          * recommend building a MatrixCursor described at:
          * http://developer.android.com/reference/android/database/MatrixCursor.html
          */
+        FileInputStream inputStream;
+        String value = "";
+        byte[] buff = new byte[100];
+        char c;
+
+        try {
+            inputStream = getContext().openFileInput(selection);
+            while(inputStream.read(buff) != -1)
+            {
+                value += new String(buff);
+            }
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Log.v("key",selection);
+        Log.v("Value",value);
+        String[] columnNames = {"key","value"};
+        String[] columnValue = {selection,value.trim()};
+        MatrixCursor cursor = new MatrixCursor(columnNames);
+        cursor.addRow(columnValue);
+
         Log.v("query", selection);
-        return null;
+        return cursor;
     }
 }
